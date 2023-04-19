@@ -27,5 +27,7 @@ Imports:
     furrr,
     future,
     dplyr,
-    tidyr (<= 0.8.3),
+    tidyr,
     purrr
+Depends: 
+    R (>= 2.10)

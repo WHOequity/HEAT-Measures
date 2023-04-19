@@ -139,7 +139,9 @@ add_strata_id <- function(.data, strata_vars = heatmeasures::HEAT_strata_variabl
   if(!"strata_id"%in%names(.data)){
   strata_vars <- syms(strata_vars)
   .data <- .data %>% 
-    mutate(strata_id = group_indices(.,!!!strata_vars))
+    dplyr::group_by(!!!strata_vars) %>% 
+    dplyr::mutate(strata_id = dplyr::cur_group_id()) %>% 
+    dplyr::ungroup()
   }
   
   .data
@@ -193,7 +195,7 @@ HEAT_measures_validation_tests <- function(strata, measures, only_return_passing
 
   measures <- heatmeasures::HEAT_summary_measures_types %>% 
     filter(measure%in%measures) %>% 
-    tidyr::unnest()
+    tidyr::unnest(test_name)
   
   tests <- unique(measures$test_name)
   
@@ -348,7 +350,7 @@ HEAT_create_input_list <- function(.data,
 #' @export
 HEAT_measures_validation_map <- function(.data_split, measures) {
   
-  future::plan("multiprocess")
+  plan(multisession)
   
   #pb <- dplyr::progress_estimated(length(.data_split))
   
@@ -375,8 +377,8 @@ HEAT_measures_validation_map <- function(.data_split, measures) {
 #' @export
 HEAT_measures_map <- function(.data_split, validation_results){
   #browser()
-  #pb <- dplyr::progress_estimated(length(.data_split))
-  future::plan("multiprocess")
+  # Changing from multiprocess because it's deprecated
+  plan(multisession) #https://cran.r-project.org/web/packages/future/vignettes/future-1-overview.html
   final_results <-furrr::future_map2_dfr(.data_split, 
                                   validation_results, 
                                   function(x, y){
@@ -438,6 +440,7 @@ HEAT_measures_map <- function(.data_split, validation_results){
 HEAT_measures_full_process <- function(.data){
   
 
+  library(future)
   if(!"strata_id"%in%names(.data)) stop("You need a 'strata_id' field")
   which_measures <- heatmeasures::HEAT_choose_measures_dataset(.data)
   
@@ -482,9 +485,15 @@ HEAT_measures_outlier2NA <- function(.data){
   .data <- select(heatmeasures::HEAT_summary_measures, measure = measure_abbr, inequal_min, inequal_max) %>% 
     left_join(.data, ., by = "measure")
   
-  .data <- mutate_at(.data, 
-                   vars("inequal", "se", "se.lowerci", "se.upperci"), 
-                   funs(ifelse(inequal>inequal_max | inequal < inequal_min, NA, .)))
+  
+  out_of_range <- .data$inequal > .data$inequal_max | .data$inequal < .data$inequal_min | is.na(.data$inequal)
+  
+  .data[out_of_range, c("inequal", "se", "se.lowerci", "se.upperci")] <- NA
+  
+  # x <- mutate_at(.data, 
+  #                  vars("inequal", "se", "se.lowerci", "se.upperci"), 
+  #                  funs(ifelse(inequal>inequal_max | inequal < inequal_min, NA, .)))
+  
   .data %>% select(-inequal_min, -inequal_max)
 }
 
