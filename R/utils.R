@@ -242,15 +242,55 @@ should_simulation_run <- function(strata, test_results) {
   usefulSE(strata)
 }
 
-do_simulation <- function(strata, simulation_iterations) {
+do_simulation <- function(strata, simulation_iterations, hasrefgroup) {
 
-  scaleval <- unique(strata$indicator_scale)
-  estrand <- purrr::map(1:simulation_iterations, 
-                        ~rnorm(nrow(strata), 
-                               strata$estimate/scaleval, 
-                               strata$se/scaleval))
-  
-  estrand
+    scaleval <- unique(strata$indicator_scale)
+    
+    estrand<-NULL
+    
+    input_data <- data.frame(est = strata$estimate,
+                             se = strata$se,
+                             scaleval = strata$indicator_scale,
+                             favourable = strata$favourable_indicator) #Only for those that need ref_estimate
+    
+    simx <- list()
+    
+    set.seed(123456) #setting seed
+    
+    for (j in 1:simulation_iterations) {
+      
+      # Simulate each estimate in the dataset
+      simulated_data <- input_data %>%
+        rowwise() %>%
+        mutate(simulation =
+                 {result <- if (scaleval != 100) {
+                   repeat {
+                     result <- rnorm(1, mean = est, sd = se)
+                     if (result >= 0) break
+                   }
+                   result
+                 } else {
+                   repeat {
+                     result <- rnorm(1, mean = est, sd = se)
+                     if (result >= 0 & result <= 100) break
+                   }
+                   result
+                 }
+                 }) %>%
+        ungroup() 
+      
+      #only for those who need ref_estimate
+      if(!hasrefgroup) {
+        simulated_data <- simulated_data %>%
+          mutate(ref_estimate = 
+                   ifelse(favourable == 1,
+                          max(simulation), min(simulation)))
+      }
+      
+      simx[[j]]<-simulated_data$simulation
+    }
+    
+    simx
 }
 
 conf.int.norm <- function(val, se) {
@@ -279,11 +319,15 @@ HEAT_create_input_list <- function(.data,
                                    simulation_n = 100, 
                                    force_simulations = FALSE) {
   
-  dat <- arrange(.data, subgroup_order)
+
+  .data <- arrange(.data, subgroup_order) |> 
+    dplyr::filter(!is.na(estimate))
+  
   
   pop <- .data$population
   est <- .data$estimate
   se <- .data$se
+  est_natl <- .data$setting_average
   SEuseful <- usefulSE(.data)
   ordered <- is_ordered_dimension(.data)
   favourable <- is_favourable_indicator(.data)
@@ -303,14 +347,19 @@ HEAT_create_input_list <- function(.data,
   subgroup_order <- .data$subgroup_order
   
   popsh <- pop / sum(pop)
-  est_natl <- sum(popsh * est)
   
-  strata_info <- select(dat, !!!syms(heatmeasures::HEAT_strata_variables)) %>% 
+  # Note that est_natl uses get_weighted_mean from now on
+  # but we've done this in the measures that need it
+  # par, paf, mdmu, idisu
+  #est_natl <- sum(popsh * est)
+  est_natl <- get_weighted_mean(est, popsh, est_natl)
+  
+  strata_info <- select(.data, !!!syms(heatmeasures::HEAT_strata_variables)) %>% 
     distinct()
   
   run_simulation <- should_simulation_run(.data, validation_results)
   simulations <- NULL
-  if(run_simulation | force_simulations) simulations <- do_simulation(.data, simulation_n)
+  if(run_simulation | force_simulations) simulations <- do_simulation(.data, simulation_n, hasrefgroup)
   
   
   list(
@@ -447,7 +496,7 @@ HEAT_measures_full_process <- function(.data){
   .data_split <- .data %>% 
     split(.$strata_id) 
   
-  message("Starting data validation process")
+  message("Starting data validation process\n")
   validate_results <- heatmeasures::HEAT_measures_validation_map(.data_split, which_measures)
   
   some_passing_measures <- purrr::map_lgl(validate_results, function(x){
@@ -455,11 +504,11 @@ HEAT_measures_full_process <- function(.data){
   })
   
   
-  message("Starting measure calculations")
+  message("Starting measure calculations\n")
   .res <- heatmeasures::HEAT_measures_map(.data_split[some_passing_measures],
                     validate_results[some_passing_measures])
   
-  message("Setting outliers to missing")
+  message("Setting outliers to missing\n")
   
   heatmeasures::HEAT_measures_outlier2NA(.res)
   
@@ -507,4 +556,24 @@ HEAT_subset_strata <- function(.data, setting1, year1, source1, dimension1, indi
          source == source1,
          dimension == dimension1,
          indicator_abbr == indicator_abbr1)
+}
+
+#' See github 903
+#'
+#' @param est 
+#' @param popsh 
+#' @param setting_average 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+get_weighted_mean <- function(est, popsh, setting_average){
+  if(sum(is.na(popsh)) == 0){
+    wgt.mean <- stats::weighted.mean(est, popsh)
+  } else {
+    wgt.mean <- setting_average[1]
+  }
+  
+  wgt.mean
 }

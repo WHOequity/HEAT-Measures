@@ -4,36 +4,10 @@
 \alias{calc_mdbu}
 \title{Title}
 \usage{
-calc_mdbu(
-  est,
-  se,
-  SEuseful,
-  favourable,
-  hasrefgroup,
-  scaleval,
-  simulations,
-  ...
-)
+calc_mdbu(est, se, SEuseful, favourable, scaleval, simulations, ...)
 }
 \arguments{
-\item{est}{}
-
-\item{se}{}
-
-\item{SEuseful}{}
-
-\item{favourable}{}
-
-\item{hasrefgroup}{}
-
-\item{scaleval}{}
-
-\item{simulations}{}
-
 \item{...}{}
-}
-\value{
-
 }
 \description{
 Title

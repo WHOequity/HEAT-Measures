@@ -21,9 +21,6 @@ calc_rci(pop, popsh, est, est_natl, se, SEuseful, subgroup_order, ...)
 
 \item{...}{}
 }
-\value{
-
-}
 \description{
 Title
 }

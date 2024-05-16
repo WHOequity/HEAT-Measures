@@ -4,7 +4,17 @@
 \alias{calc_bgsd}
 \title{Caculate BGSD}
 \usage{
-calc_bgsd(popsh, est, est_natl, se, SEuseful, ...)
+calc_bgsd(
+  popsh,
+  est,
+  est_natl,
+  se,
+  SEuseful,
+  scaleval,
+  favourable,
+  simulations,
+  ...
+)
 }
 \arguments{
 \item{popsh}{Popsh}
@@ -13,9 +23,11 @@ calc_bgsd(popsh, est, est_natl, se, SEuseful, ...)
 
 \item{est_natl}{Est national}
 
-\item{se}{Standard}
+\item{se}{Standard error}
 
 \item{SEuseful}{A boolean}
+
+\item{scaleval}{Indicator scale}
 
 \item{...}{Other arguments.}
 }

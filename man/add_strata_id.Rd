@@ -13,9 +13,6 @@ add_strata_id(.data, strata_vars = heatmeasures::HEAT_strata_variables)
 
 \item{strata_vars}{as string, a vector of field names to use to determine unique strata.}
 }
-\value{
-
-}
 \description{
 Add a new column called \code{strata_id} that will be unique for each strata. The default fields
 used to determine unique strata are created in the data-raw/strata-variables.R file and are a

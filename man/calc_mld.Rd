@@ -7,20 +7,7 @@
 calc_mld(popsh, est, est_natl, se, SEuseful, ...)
 }
 \arguments{
-\item{popsh}{}
-
-\item{est}{}
-
-\item{est_natl}{}
-
-\item{se}{}
-
-\item{SEuseful}{}
-
 \item{...}{}
-}
-\value{
-
 }
 \description{
 Title

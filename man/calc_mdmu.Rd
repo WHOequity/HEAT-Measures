@@ -7,22 +7,7 @@
 calc_mdmu(pop, est, se, SEuseful, scaleval, simulations, ...)
 }
 \arguments{
-\item{pop}{}
-
-\item{est}{}
-
-\item{se}{}
-
-\item{SEuseful}{}
-
-\item{scaleval}{}
-
-\item{simulations}{}
-
 \item{...}{}
-}
-\value{
-
 }
 \description{
 Title

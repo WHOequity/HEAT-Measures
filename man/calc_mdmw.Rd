@@ -7,22 +7,7 @@
 calc_mdmw(popsh, est, se, SEuseful, scaleval, simulations, ...)
 }
 \arguments{
-\item{popsh}{}
-
-\item{est}{}
-
-\item{se}{}
-
-\item{SEuseful}{}
-
-\item{scaleval}{}
-
-\item{simulations}{}
-
 \item{...}{}
-}
-\value{
-
 }
 \description{
 Title

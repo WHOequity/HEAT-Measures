@@ -9,9 +9,6 @@ HEAT_choose_measures_dataset(.data)
 \arguments{
 \item{.data}{a full dataset, potentially with many dimensions}
 }
-\value{
-
-}
 \description{
 A function to identify which inequality measures to use for a full dataset based on dimensions
 }

@@ -16,43 +16,42 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-######### Mean Difference from the Mean (mdmu)
+######### Mean Difference from the Reference Subgroup (mdru)
 
 # absolute, complex, non ordered, weighted, greater than two
 # region
 
 #' Title
 #'
-#' @param pop
 #' @param est
 #' @param se
 #' @param SEuseful
+#' @param favourable
 #' @param scaleval
 #' @param simulations
+#' @param reference_subgroup
 #' @param ...
 #'
 #' @return
 #' @export
-calc_mdmu <- function(pop,
-                      est,
+calc_mdru <- function(est,
                       se,
                       SEuseful,
+                      favourable,
                       scaleval,
-                      simulations, ...){
+                      simulations,
+                      reference_subgroup, ...){
   
-  popsh <- pop / sum(pop)
-  #est_natl <- get_weighted_mean(est, popsh, est_natl)
-  n <- length(est)
-  
-  # TODO: required?
-  #if(any(badData) || is.na(est_natl)) return(na_return)
+  ref_est <- est[reference_subgroup == 1] #dat$estimate[dat$reference_subgroup == 1], #git440
   
   est1 <- est / scaleval
   se1 <- se / scaleval
+  ref_est1 <- ref_est / scaleval
+  n <- length(est)
   
-  inequal.mdmu <- sum(abs(est1 - sum(popsh * est1)))/n
-  #inequal.mdmu <- sum(popsh * abs(est1 - sum(popsh * est1)))
-  inequal.mdmu <- inequal.mdmu * scaleval
+  inequal.mdru <- sum(abs(ref_est1-est1))/n
+  inequal.mdru <- inequal.mdru * scaleval
+  #inequal.mdru <- sum(popsh * abs(ref_est1-est1))
   
   # Calculate 95% confidence intervals
   boot.lcl2 <- NA
@@ -60,18 +59,20 @@ calc_mdmu <- function(pop,
   
   if(SEuseful){
     
-    mdmu_sim <- sapply(simulations, function(one_sim){
-      (sum(abs(one_sim - sum(popsh * one_sim)))/n)
+    mdru_sim <- sapply(simulations, function(one_sim){
+      
+      ref_estimate <- ifelse(favourable == 1, max(one_sim), min(one_sim))
+      (sum(abs(ref_estimate-one_sim))/n)
     })
-    boot.lcl2 <- quantile(mdmu_sim, probs = c(0.025), na.rm = T)
-    boot.ucl2 <- quantile(mdmu_sim, probs = c(0.975), na.rm = T)
+    
+    boot.lcl2 <- quantile(mdru_sim, probs = c(0.025), na.rm = T)
+    boot.ucl2 <- quantile(mdru_sim, probs = c(0.975), na.rm = T)
   }
   
-  # Return the results as a list
-  return(tibble(measure = "mdmu",
-                inequal = inequal.mdmu,
+  return(tibble(measure = "mdru",
+                inequal = inequal.mdru,
                 se = NA,
                 se.lowerci = boot.lcl2,
-                se.upperci = boot.ucl2))  # return a list of the inequality measure and the standard error
+                se.upperci = boot.ucl2))
   
 }

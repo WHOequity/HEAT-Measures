@@ -11,9 +11,6 @@ HEAT_measures_map(.data_split, validation_results)
 
 \item{validation_results}{}
 }
-\value{
-
-}
 \description{
 Title
 }

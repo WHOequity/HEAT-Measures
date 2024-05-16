@@ -24,12 +24,12 @@ Makes use of a built in table called summary_measure_types to determine the
 appropriate test.
 }
 \details{
-\preformatted{Observations: 31
+\if{html}{\out{<div class="sourceCode">}}\preformatted{Observations: 31
 Variables: 5
 $ measure         <chr> "aci", "bgsd", "bgv", "cov", "d", "d", "d", "d", "idisu", "idisw", "mdbu", ... \\cr
 $ just2_subgroups <lgl> FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, ... \\cr
 $ ordered         <lgl> TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, F... \\cr
 $ simulation_se   <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ... \\cr
 $ test_name       <list> [<"test_estimates_all_zero", "test_two_subgroups", "test_less_than2_subgro... \\cr
-}
+}\if{html}{\out{</div>}}
 }

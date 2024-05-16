@@ -9,9 +9,6 @@ HEAT_measures_full_process(.data)
 \arguments{
 \item{.data}{main data as a data.frame or tibble}
 }
-\value{
-
-}
 \description{
 Apply validation tests and compute inequality measures in one step
 }

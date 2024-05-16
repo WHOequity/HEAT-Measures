@@ -21,9 +21,6 @@ calc_r(ordered, favourable, max_est, min_est, max_se, min_se, ...)
 
 \item{...}{}
 }
-\value{
-
-}
 \description{
 Title
 }

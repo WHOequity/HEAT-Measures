@@ -8,24 +8,7 @@ relative, complex, ordered, weighted, greater than two (wealth, educ)}
 calc_sii(pop, est, se, SEuseful, favourable, scaleval, subgroup_order, ...)
 }
 \arguments{
-\item{pop}{}
-
-\item{est}{}
-
-\item{se}{}
-
-\item{SEuseful}{}
-
-\item{favourable}{}
-
-\item{scaleval}{}
-
-\item{subgroup_order}{}
-
 \item{...}{}
-}
-\value{
-
 }
 \description{
 Slope Index of Inequality (SII)

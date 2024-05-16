@@ -13,7 +13,7 @@ Description: Generate inequality measures.
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.0
+RoxygenNote: 7.2.3
 VignetteBuilder: knitr
 Suggests: 
     testthat,
@@ -28,6 +28,8 @@ Imports:
     future,
     dplyr,
     tidyr,
-    purrr
+    purrr,
+    marginaleffects,
+    sandwich
 Depends: 
     R (>= 2.10)

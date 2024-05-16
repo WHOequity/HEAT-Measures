@@ -30,48 +30,70 @@
 #' Calculate ACI measure
 #'
 #' @param pop Pop.
-#' 
-#' @param popsh Popsh.
-#' 
+#'  
 #' @param est Estimate.
-#' 
-#' @param se Se.
-#' 
-#' @param SEuseful A boolean?
 #' 
 #' @param ... Other arguments
 #'
 #' @return A tibble.
 #' 
 #' @export
-calc_aci <- function(pop, popsh, est, se, SEuseful, subgroup_order, ...) { 
+calc_aci <- function(pop, 
+                     est, 
+                     subgroup_order, ...) { 
 
   #git 401
   if(!all(diff(subgroup_order) == 1)){
     reorder <- order(subgroup_order)
     pop <- pop[reorder]
-    popsh <- popsh[reorder]
-    se <- se[reorder]
     est <- est[reorder]
   }
   
-  mid.point <- midPointProp(pop) 
-  inequal.aci <- sum(popsh * (2*mid.point - 1) * est)
+  #git 1004 Update ACI measure
+  sumw <- sum(pop, na.rm = TRUE)
+  cumw <- cumsum(pop)
+  intercept <-sqrt(pop)
+  cumw1 <- dplyr::lag(cumw)
+  cumw1[is.na(cumw1)] <- 0
+  newdat_aci <- as.data.frame(cbind(est,
+                                    pop,
+                                    subgroup_order,
+                                    sumw,
+                                    cumw,
+                                    cumw1,
+                                    intercept))
+  newdat_aci <- newdat_aci %>%
+    group_by(subgroup_order) %>%
+    mutate(cumwr = max(.data$cumw, na.rm = TRUE),
+           cumwr1 = min(.data$cumw1, na.rm = TRUE)) %>%
+    ungroup()
+  rank <- (newdat_aci$cumwr1 + 0.5 *
+             (newdat_aci$cumwr-newdat_aci$cumwr1)) / newdat_aci$sumw
+  tmp <- (newdat_aci$pop / newdat_aci$sumw) * ((rank - 0.5)^2)
+  sigma1 <- sum(tmp)
+  tmp1 <- newdat_aci$pop*newdat_aci$est
+  meanlhs <- sum(tmp1)
+  meanlhs1 <- meanlhs/newdat_aci$sumw
+  lhs <- (sigma1 * 2 * (newdat_aci$est / meanlhs1) * newdat_aci$intercept)
+  lhs1 <- lhs * meanlhs1
+  rhs <- rank * newdat_aci$intercept
+  newdat_aci <- as.data.frame(cbind(newdat_aci, lhs, lhs1, rhs))
   
-  se.formula <- NA
-  ci <- list(l = NA, u = NA)
+  # Calculate ACI
+  mod <- glm(lhs1 ~ 0 + rhs + intercept,
+             family = gaussian,
+             data = newdat_aci)
   
+  inequal.aci <- mod$coefficients[[1]]
   
-  if(SEuseful){
-    # Formula-based SE: provided by Ahmad Hosseinpoor (WHO, Geneva)
-    se.formula <- sqrt(sum((popsh^2)*(2*midPointProp(popsh)-1)^2*se^2))
-    ci <- conf.int.norm(inequal.aci, se.formula)
-  }
-  
+  # Calculate 95% confidence intervals
+  se.formula <- sqrt(diag(vcov(mod)))[[1]] 
+  lowerci <- inequal.aci - se.formula * qnorm(0.975)
+  upperci <- inequal.aci + se.formula * qnorm(0.975)
   
   return(tibble(measure = "aci", 
                 inequal = inequal.aci, 
                 se = se.formula, 
-                se.lowerci = ci$l, 
-                se.upperci = ci$u))
+                se.lowerci = lowerci, 
+                se.upperci = upperci))
 }

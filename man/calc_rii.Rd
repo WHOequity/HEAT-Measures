@@ -2,30 +2,15 @@
 % Please edit documentation in R/calc-rii.R
 \name{calc_rii}
 \alias{calc_rii}
-\title{Title}
+\title{Slope Index of Inequality (SII)
+relative, complex, ordered, weighted, greater than two (wealth, educ)}
 \usage{
 calc_rii(pop, est, se, SEuseful, favourable, scaleval, subgroup_order, ...)
 }
 \arguments{
-\item{pop}{}
-
-\item{est}{}
-
-\item{se}{}
-
-\item{SEuseful}{}
-
-\item{favourable}{}
-
-\item{scaleval}{}
-
-\item{subgroup_order}{}
-
 \item{...}{}
 }
-\value{
-
-}
 \description{
-Title
+Slope Index of Inequality (SII)
+relative, complex, ordered, weighted, greater than two (wealth, educ)
 }

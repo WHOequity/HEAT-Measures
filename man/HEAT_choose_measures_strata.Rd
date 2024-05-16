@@ -9,9 +9,6 @@ HEAT_choose_measures_strata(strata)
 \arguments{
 \item{strata}{one strata worth of data as a data.frame or tibble}
 }
-\value{
-
-}
 \description{
 A function to identify which inequality measures to use for a strata
 }

@@ -4,23 +4,10 @@
 \alias{calc_cov}
 \title{Title}
 \usage{
-calc_cov(popsh, est, est_natl, se, SEuseful, ...)
+calc_cov(popsh, est, est_natl, se, SEuseful, scaleval, simulations, ...)
 }
 \arguments{
-\item{popsh}{}
-
-\item{est}{}
-
-\item{est_natl}{}
-
-\item{se}{}
-
-\item{SEuseful}{}
-
 \item{...}{}
-}
-\value{
-
 }
 \description{
 Title

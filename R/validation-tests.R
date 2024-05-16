@@ -86,7 +86,7 @@ test_missing_population <- function(strata){
 # Test if the national average is missing
 #******************************************************************************
 test_missing_natl_avg <- function(strata){
-  unique_natl <- unique(strata$national)
+  unique_natl <- unique(strata$setting_average)
   length(unique_natl)!=1 | is.na(unique_natl)
 }
 
@@ -96,7 +96,7 @@ test_missing_natl_avg <- function(strata){
 #******************************************************************************
 
 test_natl_all_zero <- function(strata){
-  all(strata$national == 0 | is.na(strata$national))
+  all(strata$setting_average == 0 | is.na(strata$setting_average))
 }
 
 
@@ -132,7 +132,6 @@ test_se_all_missing <- function(strata){
 # For ordered dimensions with >2 subgroups: Return NA if the estimate for the most-disadvantaged subgroup (min subgroup_order) or most-advantaged subgroup (max subgroup_order) are missing.
 # For non-ordered dimensions with >2 subgroups: Return NA if any subgroup estimate is missing. 
 
-
 test_d_r_fail <- function(strata){
   
   est <- strata$estimate
@@ -143,10 +142,10 @@ test_d_r_fail <- function(strata){
   ord <- is_ordered_dimension(strata)
   two_groups <- test_two_subgroups(strata)
   more_groups <- test_more_than2_subgroups(strata)
-  estimates.all.zero <- test_estimates_all_zero(strata)
+  #estimates.all.zero <- test_estimates_all_zero(strata) 
   #natl.all.zero <- natl_all_zero(strata)
-  if(estimates.all.zero) return(TRUE)
-  if(less2) return(TRUE)
+  #if(estimates.all.zero) return(TRUE) #This test is applied but outside test_d_r_fail
+  #if(less2) return(TRUE) #This test is applied but outside test_d_r_fail
   #if(estimates.all.zero | natl.all.zero) return(TRUE)
   # if we have two subgroups and either is missing
   # an estimate return TRUE (fail)
@@ -161,10 +160,12 @@ test_d_r_fail <- function(strata){
     if(eitherNA) return(TRUE)
   }
   
-  if(!ord & more_groups){
-    anyNA <- any(is.na(est))
-    if(anyNA) return(TRUE)
-  }
+  # if we have a non-ordered dimension and more than
+  # two dimensions, min and max come from the available estimates
+  # if(!ord & more_groups){ 
+  #   anyNA <- any(is.na(est))
+  #   if(anyNA) return(TRUE)
+  # }
   
   return(FALSE)
   
@@ -179,21 +180,23 @@ test_d_r_fail <- function(strata){
 
 test_par_paf_fail <- function(strata){
   #strata <- dat
-  less2 <- test_less_than2_subgroups(strata)
+  #less2 <- test_less_than2_subgroups(strata)
   ord <- is_ordered_dimension(strata)
   est <- strata$estimate
   ref_group_exists <- reference_group_exists(strata)
   if(ref_group_exists) ref_group_indx <- which_is_refgroup(strata)
   est_se <- get_est_se_min_max(strata)
   est_max <- est_se$estimate[est_se$type=="max"]
-  estimates.all.zero <- test_estimates_all_zero(strata)
+  #estimates.all.zero <- test_estimates_all_zero(strata)
   #natl.all.zero <- natl_all_zero(strata)
   
   # git845 manual computation
   popsh <- strata$population / sum(strata$population)
-  est_natl <- sum(popsh * strata$estimate)
+  #est_natl <- sum(popsh * strata$estimate)
+  # git977
+  est_natl <- get_weighted_mean(strata$estimate, popsh, strata$setting_average)
   
-  if(estimates.all.zero | is.na(est_natl) | less2) return(TRUE)
+  if(is.na(est_natl)) return(TRUE)
   
   # If reference_subgroup is specified: 
   # Return NA if the estimate for the reference_subgroup is missing. 
@@ -204,18 +207,18 @@ test_par_paf_fail <- function(strata){
   # Return NA if the estimate for the most-advantaged subgroup 
   # (max subgroup_order) is missing. 
   
-  if(!ref_group_exists & ord){
-    if(is.na(est_max)) return(TRUE)
-  }
+  # if(!ref_group_exists & ord){
+  #   if(is.na(est_max)) return(TRUE)
+  # }
   
   
   # If reference_subgroup is not specified: 
   # For non-ordered dimensions: 
   # Return NA if any subgroup estimate is missing. 
-  
-  if(!ref_group_exists & !ord){
-    if(any(is.na(est_se$estimate))) return(TRUE)
-  }
+  # 
+  # if(!ref_group_exists & !ord){
+  #   if(any(is.na(est_se$estimate))) return(TRUE)
+  # }
   
   return(FALSE)
   
@@ -223,10 +226,66 @@ test_par_paf_fail <- function(strata){
 
 
 
+#******************************************************************************
+# Test that if it's missing a subgroup
+#******************************************************************************
+# adjusted per git#981
+test_norefgroup <- function(strata){
+  ref_subgroup <- strata$reference_subgroup == 1
+  # Either there is no ref group or there is more than one ref group
+  part1 <- !(sum(ref_subgroup, na.rm = TRUE) == 1)
 
+  # There is just one ref group but the estimate is missing
+  part2 <- (sum(ref_subgroup, na.rm = TRUE) == 1) && is.na(strata$estimate[ref_subgroup])
+    part1 | part2
+}
 
+#******************************************************************************
+# 
+#******************************************************************************
+# git981
+test_under85_pct <- function(strata){
+  n <- length(strata$estimate)
+  na <- sum(is.na(strata$estimate))
+  (1-(na/n)) < 0.85
+}
 
+#******************************************************************************
+# 
+#******************************************************************************
+# git981
+test_under85_pct_missing_pop <- function(strata){
+  n <- nrow(strata)
+  na <- sum(is.na(strata$estimate)) 
+  napop <-sum(is.na(strata$population[!is.na(strata$estimate)]))
+  test <- ((1-(na/n)) < 0.85) | (napop > 0)
+  test
+}
 
+#******************************************************************************
+# 
+#******************************************************************************
+# git981
+test_under85_pct_missing_pop_natl_avg <- function(strata){
+  n <- nrow(strata)
+  na <- sum(is.na(strata$estimate)) 
+  napop <-sum(is.na(strata$population[!is.na(strata$estimate)]))
+  nanatl <-all(is.na(strata$setting_average))
+  test <- ((1-(na/n)) < 0.85) | ((napop > 0) & isTRUE(nanatl))
+  test
+}
 
-
-
+#******************************************************************************
+# 
+#******************************************************************************
+# git990
+test_missing_natl_avg <- function(strata){
+  popsh <- strata$population/sum(strata$population, na.rm = T)
+  wgt.mean.1 <- sum(strata$estimate * popsh, na.rm = T)
+  wgt.mean.2 <- unique(strata$setting_average)[1]
+  both.na <-  (is.na(wgt.mean.1) & is.na(wgt.mean.2))
+  both.zero <- (wgt.mean.1 == 0) & (wgt.mean.2 == 0)
+  nazero <- (is.na(wgt.mean.1) & wgt.mean.2 == 0) | 
+    (is.na(wgt.mean.2) & wgt.mean.1 == 0)
+  both.na | both.zero | nazero
+}

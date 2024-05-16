@@ -30,21 +30,13 @@
 #' Title
 #'
 #' @param pop 
-#' @param popsh 
 #' @param est 
-#' @param est_natl 
-#' @param se 
-#' @param SEuseful 
 #' @param ... 
 #'
 #' @return
 #' @export
 calc_rci <- function(pop,
-                     popsh,
                      est,
-                     est_natl,
-                     se,
-                     SEuseful,
                      subgroup_order,
                      ...){ 
 
@@ -52,38 +44,58 @@ calc_rci <- function(pop,
   if(!all(diff(subgroup_order) == 1)){
     reorder <- order(subgroup_order)
     pop <- pop[reorder]
-    popsh <- popsh[reorder]
-    se <- se[reorder]
     est <- est[reorder]
   }
   
-  mid.point <- midPointProp(pop) 
-  inequal.aci <- sum(popsh * (2*mid.point - 1) * est)
+  #git 1005 Update RCI measure
+  sumw <- sum(pop, na.rm = TRUE)
+  cumw <- cumsum(pop)
+  intercept <-sqrt(pop)
+  cumw1 <- dplyr::lag(cumw)
+  cumw1[is.na(cumw1)] <- 0
+  newdat_aci <- as.data.frame(cbind(est,
+                                    pop,
+                                    subgroup_order,
+                                    sumw,
+                                    cumw,
+                                    cumw1,
+                                    intercept))
+  newdat_aci <- newdat_aci %>%
+    group_by(subgroup_order) %>%
+    mutate(cumwr = max(.data$cumw, na.rm = TRUE),
+           cumwr1 = min(.data$cumw1, na.rm = TRUE)) %>%
+    ungroup()
+  rank <- (newdat_aci$cumwr1 + 0.5 *
+             (newdat_aci$cumwr-newdat_aci$cumwr1)) / newdat_aci$sumw
+  tmp <- (newdat_aci$pop / newdat_aci$sumw) * ((rank - 0.5)^2)
+  sigma1 <- sum(tmp)
+  tmp1 <- newdat_aci$pop*newdat_aci$est
+  meanlhs <- sum(tmp1)
+  meanlhs1 <- meanlhs/newdat_aci$sumw
   
-  # added 100 * per git 374
-  inequal.rci <- 100 * inequal.aci / est_natl
+  lhs <- 2 * sigma1 * (newdat_aci$est / meanlhs1) * newdat_aci$intercept
   
-  se.formula <- NA
-  ci <- list(l = NA, u = NA)
+  rhs <- rank * newdat_aci$intercept
   
-  if(SEuseful){
-
-    mid.point <- midPointProp(popsh) 
-    sumprodsqrd <- sum(popsh * est)^2
-    
-    s2_s6 <- (popsh^2) * ((2 * mid.point - 1) - inequal.rci)^2 * se^2
-    se.formula <- sqrt( sum(s2_s6) / sumprodsqrd )
-    
-    ci <- conf.int.norm(inequal.rci, se.formula)
-  }
+  newdat_rci <- as.data.frame(cbind(newdat_aci,
+                                    lhs,
+                                    rhs))
   
-
+  # Calculate RCI
+  mod <- glm(lhs ~ 0 + rhs + intercept,
+               family = gaussian,
+               data = newdat_rci)
+  
+  inequal.rci <- mod$coefficients[[1]]
+  
+  # Calculate 95% confidence intervals
+  se.formula <- sqrt(diag(vcov(mod)))[[1]] 
+  lowerci <- inequal.rci - se.formula * qnorm(0.975)
+  upperci <- inequal.rci + se.formula * qnorm(0.975)
   
   return(tibble(measure = "rci",
                 inequal = inequal.rci, 
                 se = se.formula, 
-                se.lowerci = ci$l, 
-                se.upperci = ci$u))
+                se.lowerci = lowerci, 
+                se.upperci = upperci))
 }
-
-

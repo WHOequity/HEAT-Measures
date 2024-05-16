@@ -7,24 +7,7 @@
 calc_idisw(popsh, est, est_natl, se, SEuseful, scaleval, simulations, ...)
 }
 \arguments{
-\item{popsh}{}
-
-\item{est}{}
-
-\item{est_natl}{}
-
-\item{se}{}
-
-\item{SEuseful}{}
-
-\item{scaleval}{}
-
-\item{simulations}{}
-
 \item{...}{}
-}
-\value{
-
 }
 \description{
 Title

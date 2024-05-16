@@ -9,9 +9,6 @@ HEAT_measures_outlier2NA(.data)
 \arguments{
 \item{.data}{}
 }
-\value{
-
-}
 \description{
 Outliers are defined in the summary measures Excel file in data-raw. They are defined
 solely on the value of inequal -- there is an inequal_min and inequal_max field. This function
